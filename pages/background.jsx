@@ -3,17 +3,34 @@ import Edu_Card from "../components/Background/Edu_Card";
 import Exp_Card from "../components/Background/Exp_Card";
 import BannerLayout from "../components/Common/BannerLayout";
 import Footer from "../components/Footer";
-import { useQuery } from "react-query";
-import axios from "axios";
 import { Skeleton } from "antd";
 import ParagraphSkeleton from "../components/Common/ParagraphSkeleton";
+import { useEffect, useState as useStateHook } from "react"
+import axios from "axios";
 
 function Background() {
+    const [isLoading, setIsLoading] = useStateHook(true);
+    const [error, setError] = useStateHook(null);
+    const [data, setData] = useStateHook(null);
 
-    const { isLoading, error, data } = useQuery('background', () =>
-        axios.get('api/background')
-            .then(({ data }) => data)
-            .catch(error => console.error('Error fetching testimonials:', error)))
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('api/background');
+                setData(response.data);
+                setIsLoading(false);
+            } catch (err) {
+                console.error('Error fetching background:', err);
+                setError(err);
+                setIsLoading(false);
+            }
+        };
+
+        // Only run on client side
+        if (typeof window !== 'undefined') {
+            fetchData();
+        }
+    }, []);
 
     return (
         <BannerLayout>
@@ -25,9 +42,12 @@ function Background() {
                             <ParagraphSkeleton className={"p-8 h-full w-full relative"} />
                         ))
                         :
-                        data && data[0]?.eduCards?.map((data, key) => (
-                            <Edu_Card key={key} data={data} />
-                        ))
+                        error ?
+                            <div>Error loading education data</div>
+                            :
+                            data && data[0]?.eduCards?.map((data, key) => (
+                                <Edu_Card key={key} data={data} />
+                            ))
                     }
 
                 </div>
@@ -40,9 +60,12 @@ function Background() {
                                 <ParagraphSkeleton className={"p-8 h-full w-full relative"} />
                             ))
                             :
-                            data && data[1]?.expCards?.map((data, key) => (
-                                <Exp_Card key={key} data={data} />
-                            ))
+                            error ?
+                                <div>Error loading experience data</div>
+                                :
+                                data && data[1]?.expCards?.map((data, key) => (
+                                    <Exp_Card key={key} data={data} />
+                                ))
                         }
 
                     </div>

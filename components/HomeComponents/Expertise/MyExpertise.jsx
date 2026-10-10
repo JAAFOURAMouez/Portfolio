@@ -1,14 +1,31 @@
 import ExpertiseCard from "./ExpertiseCard"
-import { useQuery } from "react-query";
-import axios from "axios";
-import ParagraphSkeleton from "../../Common/ParagraphSkeleton";
+import axios from "axios"
+import ParagraphSkeleton from "../../Common/ParagraphSkeleton"
+import { useEffect, useState } from "react"
 
 const MyExpertise = () => {
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [data, setData] = useState(null)
 
-    const { isLoading, error, data } = useQuery('expertise', () =>
-        axios.get('api/expertise')
-            .then(({ data }) => data)
-            .catch(error => console.error('Error fetching testimonials:', error)))
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('api/expertise')
+                setData(response.data)
+                setIsLoading(false)
+            } catch (err) {
+                console.error('Error fetching expertise:', err)
+                setError(err)
+                setIsLoading(false)
+            }
+        }
+
+        // Only run on client side
+        if (typeof window !== 'undefined') {
+            fetchData()
+        }
+    }, [])
 
     return (
         <>
@@ -21,9 +38,12 @@ const MyExpertise = () => {
                             <ParagraphSkeleton className={"space-y-2 p-8"} />
                         ))
                         :
-                        data?.map((data, key) => (
-                            <ExpertiseCard key={key} data={data} />
-                        ))
+                        error ?
+                            <div>Error loading data</div>
+                            :
+                            data?.map((data, key) => (
+                                <ExpertiseCard key={key} data={data} />
+                            ))
                 }
 
             </div>

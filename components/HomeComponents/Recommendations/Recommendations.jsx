@@ -1,14 +1,32 @@
 import RecommendationCard from "./RecommendationCard"
-import axios from "axios";
-import { useQuery } from "react-query";
-import ParagraphSkeleton from "../../Common/ParagraphSkeleton";
+import axios from "axios"
+import ParagraphSkeleton from "../../Common/ParagraphSkeleton"
+import { useEffect, useState } from "react"
 
 
 const Recommendations = () => {
-    const { isLoading, error, data } = useQuery('recommendations', () =>
-        axios.get('api/recommendations')
-            .then(({ data }) => data)
-            .catch(error => console.error('Error fetching testimonials:', error)))
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [data, setData] = useState(null)
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('api/recommendations')
+                setData(response.data)
+                setIsLoading(false)
+            } catch (err) {
+                console.error('Error fetching recommendations:', err)
+                setError(err)
+                setIsLoading(false)
+            }
+        }
+
+        // Only run on client side
+        if (typeof window !== 'undefined') {
+            fetchData()
+        }
+    }, [])
 
 
     return (
@@ -21,9 +39,12 @@ const Recommendations = () => {
                         <ParagraphSkeleton className={"p-8 h-full w-full relative"} />
                     ))
                     :
-                    data?.map((data, key) => (
-                        <RecommendationCard key={key} data={data} />
-                    ))
+                    error ?
+                        <div>Error loading data</div>
+                        :
+                        data?.map((data, key) => (
+                            <RecommendationCard key={key} data={data} />
+                        ))
                 }
 
             </div>
